@@ -295,14 +295,16 @@ with col1:
                 best_18 = eighteen_hole_data['total_score'].min()
                 worst_18 = eighteen_hole_data['total_score'].max()
                 rounds_18 = len(eighteen_hole_data)
-                player_stats.append((player, avg_18, best_18, worst_18, rounds_18))
+                front_avg = eighteen_hole_data['front_9'].mean()
+                back_avg = eighteen_hole_data['back_9'].mean()
+                player_stats.append((player, avg_18, best_18, worst_18, rounds_18, front_avg, back_avg))
             else:
-                player_stats.append((player, 999, 0, 0, 0))  # Put players with no rounds at the end
+                player_stats.append((player, 999, 0, 0, 0, 0, 0))  # Put players with no rounds at the end
         
         # Sort by average score (best first)
         player_stats.sort(key=lambda x: x[1])
         
-        for player, avg_18, best_18, worst_18, rounds_18 in player_stats:
+        for player, avg_18, best_18, worst_18, rounds_18, front_avg, back_avg in player_stats:
             if avg_18 == 999:  # No 18-hole rounds
                 st.markdown(f"""
                 <div class="stat-box">
@@ -320,6 +322,14 @@ with col1:
                         <div class="stat-item">
                             <div class="stat-label">Average</div>
                             <div class="stat-value">{avg_18:.1f}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Front 9</div>
+                            <div class="stat-value">{front_avg:.1f}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Back 9</div>
+                            <div class="stat-value">{back_avg:.1f}</div>
                         </div>
                         <div class="stat-item">
                             <div class="stat-label">Best</div>
