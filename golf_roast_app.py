@@ -48,17 +48,43 @@ st.markdown("""
 }
 .stat-box {
     background-color: #f0f8f0;
-    padding: 1rem;
+    padding: 0.8rem;
     border-radius: 10px;
-    text-align: center;
-    margin: 0.5rem;
+    margin: 0.3rem 0;
     border: 1px solid #d0d0d0;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     color: #333333;
+    display: flex;
+    align-items: center;
 }
-.stat-box h4 {
+.player-name {
     color: #228B22;
-    margin-bottom: 0.5rem;
+    font-weight: bold;
+    font-size: 1.1rem;
+    min-width: 120px;
+    margin-right: 1rem;
+    text-align: left;
+}
+.stats-container {
+    display: flex;
+    gap: 1.5rem;
+    flex: 1;
+}
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 60px;
+}
+.stat-label {
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 0.2rem;
+}
+.stat-value {
+    font-weight: bold;
+    font-size: 1rem;
+    color: #333;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -254,49 +280,62 @@ with col1:
     
     st.plotly_chart(fig, use_container_width=True)
     
-    # Player Statistics right under the chart
-    st.markdown('<h2 class="subheader">📊 Player Statistics</h2>', unsafe_allow_html=True)
+    # Leaderboard right under the chart
+    st.markdown('<h2 class="subheader">🏆 Leaderboard</h2>', unsafe_allow_html=True)
     
     if len(selected_players) > 0:
-        stats_cols = st.columns(len(selected_players))
-        for i, player in enumerate(selected_players):
+        # Calculate stats for each player and sort by best average
+        player_stats = []
+        for player in selected_players:
             player_data = filtered_df[filtered_df['person'] == player]
-            
-            # Separate 18-hole and 9-hole stats
             eighteen_hole_data = player_data[player_data['is_nine_hole'] == False]
-            nine_hole_data = player_data[player_data['is_nine_hole'] == True]
             
-            with stats_cols[i]:
+            if not eighteen_hole_data.empty:
+                avg_18 = eighteen_hole_data['total_score'].mean()
+                best_18 = eighteen_hole_data['total_score'].min()
+                worst_18 = eighteen_hole_data['total_score'].max()
+                rounds_18 = len(eighteen_hole_data)
+                player_stats.append((player, avg_18, best_18, worst_18, rounds_18))
+            else:
+                player_stats.append((player, 999, 0, 0, 0))  # Put players with no rounds at the end
+        
+        # Sort by average score (best first)
+        player_stats.sort(key=lambda x: x[1])
+        
+        for player, avg_18, best_18, worst_18, rounds_18 in player_stats:
+            if avg_18 == 999:  # No 18-hole rounds
                 st.markdown(f"""
                 <div class="stat-box">
-                <h4>{player}</h4>
+                    <div class="player-name">{player}</div>
+                    <div class="stats-container">
+                        <span style="color: #666; font-style: italic;">No 18-hole rounds</span>
+                    </div>
+                </div>
                 """, unsafe_allow_html=True)
-                
-                if not eighteen_hole_data.empty:
-                    avg_18 = eighteen_hole_data['total_score'].mean()
-                    best_18 = eighteen_hole_data['total_score'].min()
-                    worst_18 = eighteen_hole_data['total_score'].max()
-                    rounds_18 = len(eighteen_hole_data)
-                    
-                    st.markdown(f"""
-                    <p><strong>18-Hole Avg:</strong> {avg_18:.1f}</p>
-                    <p><strong>18-Hole Best:</strong> {best_18}</p>
-                    <p><strong>18-Hole Worst:</strong> {worst_18}</p>
-                    <p><strong>18-Hole Rounds:</strong> {rounds_18}</p>
-                    """, unsafe_allow_html=True)
-                
-                if not nine_hole_data.empty:
-                    avg_9 = nine_hole_data['total_score'].mean()
-                    best_9 = nine_hole_data['total_score'].min()
-                    rounds_9 = len(nine_hole_data)
-                    
-                    st.markdown(f"""
-                    <p><strong>9-Hole Avg:</strong> {avg_9:.1f}</p>
-                    <p><strong>9-Hole Best:</strong> {best_9}</p>
-                    <p><strong>9-Hole Rounds:</strong> {rounds_9}</p>
-                    """, unsafe_allow_html=True)
-                
-                st.markdown("</div>", unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="stat-box">
+                    <div class="player-name">{player}</div>
+                    <div class="stats-container">
+                        <div class="stat-item">
+                            <div class="stat-label">Average</div>
+                            <div class="stat-value">{avg_18:.1f}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Best</div>
+                            <div class="stat-value">{best_18}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Worst</div>
+                            <div class="stat-value">{worst_18}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Rounds</div>
+                            <div class="stat-value">{rounds_18}</div>
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
     else:
         st.info("Please select at least one player to view statistics.")
 
@@ -373,52 +412,6 @@ with col2:
             """, unsafe_allow_html=True)
     
     st.markdown("</div>", unsafe_allow_html=True)
-
-# Bottom section - Stats
-st.markdown('<h2 class="subheader">📊 Player Statistics</h2>', unsafe_allow_html=True)
-
-if len(selected_players) > 0:
-    stats_cols = st.columns(len(selected_players))
-    for i, player in enumerate(selected_players):
-        player_data = filtered_df[filtered_df['person'] == player]
-        
-        # Separate 18-hole and 9-hole stats
-        eighteen_hole_data = player_data[player_data['is_nine_hole'] == False]
-        nine_hole_data = player_data[player_data['is_nine_hole'] == True]
-        
-        with stats_cols[i]:
-            st.markdown(f"""
-            <div class="stat-box">
-            <h4>{player}</h4>
-            """, unsafe_allow_html=True)
-            
-            if not eighteen_hole_data.empty:
-                avg_18 = eighteen_hole_data['total_score'].mean()
-                best_18 = eighteen_hole_data['total_score'].min()
-                worst_18 = eighteen_hole_data['total_score'].max()
-                rounds_18 = len(eighteen_hole_data)
-                
-                st.markdown(f"""
-                <p><strong>18-Hole Avg:</strong> {avg_18:.1f}</p>
-                <p><strong>18-Hole Best:</strong> {best_18}</p>
-                <p><strong>18-Hole Worst:</strong> {worst_18}</p>
-                <p><strong>18-Hole Rounds:</strong> {rounds_18}</p>
-                """, unsafe_allow_html=True)
-            
-            if not nine_hole_data.empty:
-                avg_9 = nine_hole_data['total_score'].mean()
-                best_9 = nine_hole_data['total_score'].min()
-                rounds_9 = len(nine_hole_data)
-                
-                st.markdown(f"""
-                <p><strong>9-Hole Avg:</strong> {avg_9:.1f}</p>
-                <p><strong>9-Hole Best:</strong> {best_9}</p>
-                <p><strong>9-Hole Rounds:</strong> {rounds_9}</p>
-                """, unsafe_allow_html=True)
-            
-            st.markdown("</div>", unsafe_allow_html=True)
-else:
-    st.info("Please select at least one player to view statistics.")
 
 # Footer with more snark
 st.markdown("---")
