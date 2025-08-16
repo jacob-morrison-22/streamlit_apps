@@ -413,11 +413,3 @@ with col2:
     
     st.markdown("</div>", unsafe_allow_html=True)
 
-# Footer with more snark
-st.markdown("---")
-st.markdown("""
-<div style="text-align: center; color: #666; font-style: italic;">
-⛳ "Practice makes perfect... unless you're Dan" - Phoenix Golf Truth<br>
-🏌️‍♂️ Built with ❤️ and statistically-backed roasting by Claude Code
-</div>
-""", unsafe_allow_html=True)
